@@ -85,6 +85,7 @@ defmodule GtdWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import GtdWeb.CoreComponents
+      # use GtdWeb.Components.MishkaComponents
       import GtdWeb.Gettext
 
       # Shortcut for generating JS commands
