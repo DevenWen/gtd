@@ -60,7 +60,8 @@ defmodule Gtd.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
       {:open_api_spex, "~> 3.21"},
-      {:mishka_chelekom, "~> 0.0.1"}
+      {:mishka_chelekom, "~> 0.0.1"},
+      {:pow_assent, "~> 0.4.18"}
     ]
   end
 

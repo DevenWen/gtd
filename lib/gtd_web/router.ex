@@ -39,7 +39,7 @@ defmodule GtdWeb.Router do
 
   scope "/api", GtdWeb.Api do
     pipe_through :api
-    post "/token", TokenController, :create
+    # post "/token", TokenController, :create
 
     scope "/v1", V1 do
       resources "/tasks", TaskController
@@ -49,8 +49,8 @@ defmodule GtdWeb.Router do
     scope "/" do
       pipe_through :api_auth
       # authed apis
-      get "/token", TokenController, :get_session
-      delete "/token", TokenController, :delete
+      # get "/token", TokenController, :get_session
+      # delete "/token", TokenController, :delete
     end
   end
 
@@ -85,8 +85,6 @@ defmodule GtdWeb.Router do
       on_mount: [{GtdWeb.UserAuth, :redirect_if_user_is_authenticated}] do
       live "/users/register", UserRegistrationLive, :new
       live "/users/log_in", UserLoginLive, :new
-      live "/users/reset_password", UserForgotPasswordLive, :new
-      live "/users/reset_password/:token", UserResetPasswordLive, :edit
     end
 
     post "/users/log_in", UserSessionController, :create
@@ -106,11 +104,5 @@ defmodule GtdWeb.Router do
     pipe_through [:browser]
 
     delete "/users/log_out", UserSessionController, :delete
-
-    live_session :current_user,
-      on_mount: [{GtdWeb.UserAuth, :mount_current_user}] do
-      live "/users/confirm/:token", UserConfirmationLive, :edit
-      live "/users/confirm", UserConfirmationInstructionsLive, :new
-    end
   end
 end
