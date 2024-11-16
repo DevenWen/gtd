@@ -61,7 +61,6 @@ defmodule Gtd.MixProject do
       {:bandit, "~> 1.2"},
       {:open_api_spex, "~> 3.21"},
       {:mishka_chelekom, "~> 0.0.1"},
-      {:pow_assent, "~> 0.4.18"}
     ]
   end
 

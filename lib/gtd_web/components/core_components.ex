@@ -18,6 +18,9 @@ defmodule GtdWeb.CoreComponents do
 
   alias Phoenix.LiveView.JS
   import GtdWeb.Gettext
+  alias Gtd.Accounts
+
+  use GtdWeb, :verified_routes
 
   @doc """
   Renders a modal.
@@ -672,5 +675,13 @@ defmodule GtdWeb.CoreComponents do
   """
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
+  end
+
+  def profile_path(username) when is_binary(username) do
+    unverified_path(GtdWeb.Endpoint, GtdWeb.Router, ~p"/users/#{username}")
+  end
+
+  def profile_path(%Accounts.User{} = current_user) do
+    profile_path(current_user.username)
   end
 end

@@ -26,9 +26,9 @@ defmodule GtdWeb.Router do
   scope "/", GtdWeb do
     pipe_through :browser
 
+    get "/oauth/callbacks/:provider", UserSessionController, :new
+
     get "/", PageController, :home
-    get "/hello", HelloController, :index
-    get "/hello/:messenger", HelloController, :show
   end
 
   scope "/api" do
@@ -39,18 +39,10 @@ defmodule GtdWeb.Router do
 
   scope "/api", GtdWeb.Api do
     pipe_through :api
-    # post "/token", TokenController, :create
 
     scope "/v1", V1 do
       resources "/tasks", TaskController
       resources "/projects", ProjectController
-    end
-
-    scope "/" do
-      pipe_through :api_auth
-      # authed apis
-      # get "/token", TokenController, :get_session
-      # delete "/token", TokenController, :delete
     end
   end
 
@@ -83,7 +75,6 @@ defmodule GtdWeb.Router do
 
     live_session :redirect_if_user_is_authenticated,
       on_mount: [{GtdWeb.UserAuth, :redirect_if_user_is_authenticated}] do
-      live "/users/register", UserRegistrationLive, :new
       live "/users/log_in", UserLoginLive, :new
     end
 
@@ -92,6 +83,8 @@ defmodule GtdWeb.Router do
 
   scope "/", GtdWeb do
     pipe_through [:browser, :require_authenticated_user]
+
+    get "/users/:username", UserController, :show
 
     live_session :require_authenticated_user,
       on_mount: [{GtdWeb.UserAuth, :ensure_authenticated}] do

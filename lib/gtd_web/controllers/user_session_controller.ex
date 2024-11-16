@@ -1,48 +1,52 @@
 defmodule GtdWeb.UserSessionController do
   use GtdWeb, :controller
+  require Logger
+  import Plug.Conn
 
-  # alias Gtd.Accounts
+  alias Gtd.Accounts
   alias GtdWeb.UserAuth
 
   @moduledoc """
   1. 接收 github 回调用
   """
+  def new(conn, %{"provider" => "github", "code" => code, "state" => state}) do
+    # 获取 github 账号信息
+    client = github_client(conn)
 
-  # def create(conn, %{"_action" => "registered"} = params) do
-  #   create(conn, params, "Account created successfully!")
-  # end
+    with {:ok, info} <- client.exchange_access_token(code: code, state: state),
+         %{info: info, primary_email: primary, emails: emails, token: token} = info,
+         {:ok, user} <- Accounts.register_github_user(primary, info, emails, token) do
+      conn
+      |> put_flash(:info, "Welcome #{user.email}")
+      |> UserAuth.log_in_user(user)
+    else
+      {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.info("failed GitHub insert #{inspect(changeset.errors)}")
 
-  # def create(conn, %{"_action" => "password_updated"} = params) do
-  #   conn
-  #   |> put_session(:user_return_to, ~p"/users/settings")
-  #   |> create(params, "Password updated successfully!")
-  # end
+        conn
+        |> put_flash(
+          :error,
+          "We were unable to fetch the necessary information from your GithHub account"
+        )
+        |> redirect(to: "/")
 
-  # def create(conn, params) do
-  #   create(conn, params, "Welcome back!")
-  # end
+      {:error, reason} ->
+        Logger.info("failed GitHub insert #{inspect(reason)}")
 
-  # TODO github 登录后，移除此代码
-  # defp create(conn, %{"user" => user_params}, info) do
-  #   %{"email" => email, "password" => password} = user_params
-
-  #   if user = Accounts.get_user_by_email_and_password(email, password) do
-  #     conn
-  #     |> put_flash(:info, info)
-  #     |> UserAuth.log_in_user(user, user_params)
-  #   else
-  #     # In order to prevent user enumeration attacks, don't disclose whether the email is registered.
-  #     conn
-  #     |> put_flash(:error, "Invalid email or password")
-  #     |> put_flash(:email, String.slice(email, 0, 160))
-  #     |> redirect(to: ~p"/users/log_in")
-  #   end
-  # end
+        conn
+        |> put_flash(:error, "We were unable to contact GitHub. Please try again later")
+        |> redirect(to: "/")
+    end
+  end
 
   @spec delete(Plug.Conn.t(), any()) :: Plug.Conn.t()
   def delete(conn, _params) do
     conn
     |> put_flash(:info, "Logged out successfully.")
     |> UserAuth.log_out_user()
+  end
+
+  defp github_client(conn) do
+    conn.assigns[:github_client] || Gtd.Github
   end
 end

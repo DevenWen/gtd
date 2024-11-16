@@ -4,9 +4,10 @@ defmodule Gtd.Accounts do
   """
 
   import Ecto.Query, warn: false
+  import Ecto.Changeset
   alias Gtd.Repo
 
-  alias Gtd.Accounts.{User, UserToken, UserNotifier}
+  alias Gtd.Accounts.{User, UserToken, UserNotifier, Identity}
 
   ## Database getters
 
@@ -73,6 +74,46 @@ defmodule Gtd.Accounts do
   """
   def change_user_registration(%User{} = user, attrs \\ %{}) do
     User.registration_changeset(user, attrs, validate_email: false)
+  end
+
+  ## User registration
+
+  @spec register_github_user(String.t(), map(), [map()], String.t()) ::
+          {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def register_github_user(primary_email, info, emails, token) do
+    if user = get_user_by_provider(:github, primary_email) do
+      update_github_token(user, token)
+    else
+      # new account
+      info
+      |> User.github_registration_changeset(primary_email, emails, token)
+      |> Repo.insert()
+    end
+  end
+
+  def get_user_by_provider(provider, email) when provider in [:github] do
+    query =
+      from(u in User,
+        join: i in assoc(u, :identities),
+        where:
+          i.provider == ^to_string(provider) and
+            fragment("lower(?)", u.email) == ^String.downcase(email)
+      )
+
+    Repo.one(query)
+  end
+
+  def update_github_token(%User{} = user, new_token) do
+    identity =
+      Repo.one!(from(i in Identity, where: i.user_id == ^user.id and i.provider == "github"))
+
+    {:ok, _} =
+      identity
+      |> change()
+      |> put_change(:provider_token, new_token)
+      |> Repo.update()
+
+    {:ok, Repo.preload(user, :identities, force: true)}
   end
 
   ## Settings
@@ -153,42 +194,42 @@ defmodule Gtd.Accounts do
 
   ## Reset password
 
-  @doc ~S"""
-  Delivers the reset password email to the given user.
+  # @doc ~S"""
+  # Delivers the reset password email to the given user.
 
-  ## Examples
+  # ## Examples
 
-      iex> deliver_user_reset_password_instructions(user, &url(~p"/users/reset_password/#{&1}"))
-      {:ok, %{to: ..., body: ...}}
+  #     iex> deliver_user_reset_password_instructions(user, &url(~p"/users/reset_password/#{&1}"))
+  #     {:ok, %{to: ..., body: ...}}
 
-  """
-  def deliver_user_reset_password_instructions(%User{} = user, reset_password_url_fun)
-      when is_function(reset_password_url_fun, 1) do
-    {encoded_token, user_token} = UserToken.build_email_token(user, "reset_password")
-    Repo.insert!(user_token)
-    UserNotifier.deliver_reset_password_instructions(user, reset_password_url_fun.(encoded_token))
-  end
+  # """
+  # def deliver_user_reset_password_instructions(%User{} = user, reset_password_url_fun)
+  #     when is_function(reset_password_url_fun, 1) do
+  #   {encoded_token, user_token} = UserToken.build_email_token(user, "reset_password")
+  #   Repo.insert!(user_token)
+  #   UserNotifier.deliver_reset_password_instructions(user, reset_password_url_fun.(encoded_token))
+  # end
 
-  @doc """
-  Gets the user by reset password token.
+  # @doc """
+  # Gets the user by reset password token.
 
-  ## Examples
+  # ## Examples
 
-      iex> get_user_by_reset_password_token("validtoken")
-      %User{}
+  #     iex> get_user_by_reset_password_token("validtoken")
+  #     %User{}
 
-      iex> get_user_by_reset_password_token("invalidtoken")
-      nil
+  #     iex> get_user_by_reset_password_token("invalidtoken")
+  #     nil
 
-  """
-  def get_user_by_reset_password_token(token) do
-    with {:ok, query} <- UserToken.verify_email_token_query(token, "reset_password"),
-         %User{} = user <- Repo.one(query) do
-      user
-    else
-      _ -> nil
-    end
-  end
+  # """
+  # def get_user_by_reset_password_token(token) do
+  #   with {:ok, query} <- UserToken.verify_email_token_query(token, "reset_password"),
+  #        %User{} = user <- Repo.one(query) do
+  #     user
+  #   else
+  #     _ -> nil
+  #   end
+  # end
 
   # @doc """
   # Resets the user password.
