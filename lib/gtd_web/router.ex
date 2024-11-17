@@ -37,20 +37,6 @@ defmodule GtdWeb.Router do
     get "/swaggerui", SwaggerUI, path: "/api/openapi"
   end
 
-  scope "/api", GtdWeb.Api do
-    pipe_through :api
-
-    scope "/v1", V1 do
-      resources "/tasks", TaskController
-      resources "/projects", ProjectController
-    end
-  end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", GtdWeb do
-  #   pipe_through :api
-  # end
-
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:gtd, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put

@@ -18,6 +18,7 @@ defmodule GtdWeb.UserSessionController do
          {:ok, user} <- Accounts.register_github_user(primary, info, emails, token) do
       conn
       |> put_flash(:info, "Welcome #{user.email}")
+      |> set_user_return_to(user)
       |> UserAuth.log_in_user(user)
     else
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -44,6 +45,11 @@ defmodule GtdWeb.UserSessionController do
     conn
     |> put_flash(:info, "Logged out successfully.")
     |> UserAuth.log_out_user()
+  end
+
+  defp set_user_return_to(conn, user) do
+    user_main_path = ~p"/users/#{user.username}"
+    put_session(conn, :user_return_to, user_main_path)
   end
 
   defp github_client(conn) do
