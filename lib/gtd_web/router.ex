@@ -56,6 +56,15 @@ defmodule GtdWeb.Router do
 
   ## Authentication routes
 
+  scope "/todos", GtdWeb do
+    pipe_through [:browser]
+
+    live_session :todos,
+      on_mount: [{GtdWeb.UserAuth, :ensure_authenticated}] do
+      live "/", UserTodosLive, :index
+    end
+  end
+
   scope "/", GtdWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
