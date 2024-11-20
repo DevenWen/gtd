@@ -85,6 +85,8 @@ defmodule GtdWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import GtdWeb.CoreComponents
+
+      import GtdWeb.TodoComponents
       # use GtdWeb.Components.MishkaComponents
       import GtdWeb.Gettext
 
