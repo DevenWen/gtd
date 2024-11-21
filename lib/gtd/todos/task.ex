@@ -11,6 +11,10 @@ defmodule Gtd.Todos.Task do
     field :project_id, :id
     field :parent_id, :id
 
+    field :status, Ecto.Enum,
+      values: [:not_started, :in_progress, :completed],
+      default: :not_started
+
     timestamps(type: :utc_datetime)
   end
 

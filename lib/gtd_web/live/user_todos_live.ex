@@ -7,17 +7,21 @@ defmodule GtdWeb.UserTodosLive do
 
   def project_list_item(assigns) do
     ~H"""
-    <li class="flex items-center py-2 px-4 cursor-pointer hover:bg-gray-300 hover:shadow-md transition duration-200 ease-in-out">
+    <li>
       <span phx-click="select_project" phx-value-project_id={@project.id} class="flex-grow">
-        <%= @project.title %>
+        <div class="flex items-center space-x-2 p-2 bg-white rounded-lg shadow-md hover:bg-gray-200 transition duration-200 ease-in-out">
+          <span class="text-xl"><%= @project.icon %></span>
+          <span class="font-semibold"><%= @project.title %></span>
+          <span class="text-sm text-gray-500"><%= @project.status %></span>
+          <button
+            phx-click="new_task"
+            phx-value-project_id={@project.id}
+            class="ml-2 text-purple-500 font-bold py-1 px-2 rounded transition duration-200 ease-in-out"
+          >
+            ➕
+          </button>
+        </div>
       </span>
-      <button
-        phx-click="new_task"
-        phx-value-project_id={@project.id}
-        class="ml-5 text-white font-bold py-1 px-2 rounded transition duration-200 ease-in-out"
-      >
-        ➕
-      </button>
     </li>
     """
   end
@@ -25,16 +29,16 @@ defmodule GtdWeb.UserTodosLive do
   def render(assigns) do
     ~H"""
     <div class="flex">
-      <div class="w-1/3 p-4 border-r bg-gray-100 rounded-lg shadow-lg">
+      <div class="w-2/5 p-4 border-r bg-gray-100 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-gray-900"><%= @current_user.name %></h2>
-        <h3 class="mt-4 text-lg font-medium text-gray-700">Projects</h3>
-        <ul class="mt-2 space-y-2">
+        <h3 class="mt-4 text-lg font-medium text-gray-700 font-bold">Projects</h3>
+        <ul class="mt-2 space-y-2 text-center">
           <%= for project <- @state.projects do %>
             <.project_list_item project={project} />
           <% end %>
         </ul>
       </div>
-      <div class="w-2/3 p-4">
+      <div class="w-3/5 p-4">
         <.task_list tasks={@state.tasks} />
       </div>
       <.task_form show={@state.new_task} />
