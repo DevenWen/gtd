@@ -29,7 +29,7 @@ defmodule GtdWeb.UserTodosLive do
   def render(assigns) do
     ~H"""
     <div class="flex">
-      <div class="w-2/5 p-4 border-r bg-gray-100 rounded-lg shadow-lg">
+      <div class="w-2/5 p-4 h-screen border-r bg-gray-100 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-gray-900"><%= @current_user.name %></h2>
         <h3 class="mt-4 text-lg font-medium text-gray-700 font-bold">Projects</h3>
         <ul class="mt-2 space-y-2 text-center">
@@ -38,7 +38,7 @@ defmodule GtdWeb.UserTodosLive do
           <% end %>
         </ul>
       </div>
-      <div class="w-3/5 p-4">
+      <div class="w-3/5 p-4 h-screen">
         <.task_list tasks={@state.tasks} />
       </div>
       <.task_form show={@state.new_task} />
@@ -139,6 +139,21 @@ defmodule GtdWeb.UserTodosLive do
 
   def handle_event("close_modal", _params, socket) do
     state = %{socket.assigns.state | new_task: nil}
+    {:noreply, assign(socket, state: state)}
+  end
+
+  def handle_event("finish_task", %{"task_id" => task_id}, socket) do
+    {:ok, task} =
+      task_id
+      |> Todos.get_task!()
+      |> Todos.update_task(%{status: :completed})
+
+    tasks =
+      Enum.map(socket.assigns.state.tasks, fn t ->
+        if t.id == task.id, do: task, else: t
+      end)
+
+    state = %{socket.assigns.state | tasks: tasks}
     {:noreply, assign(socket, state: state)}
   end
 

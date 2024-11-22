@@ -64,15 +64,34 @@ defmodule GtdWeb.TodoComponents do
     <ul class="mt-2 space-y-2">
       <%= for task <- @tasks do %>
         <div>
-          <li class="py-2 px-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition duration-200 ease-in-out">
-            <h3 class="text-lg font-bold"><%= task.title %></h3>
-            <p class="text-gray-700"><%= task.content %></p>
-            <p class="text-sm text-gray-500">优先级: <%= task.priority %></p>
-            <p class="text-sm text-gray-500">截止日期: <%= task.deadline %></p>
+          <li class="py-2 px-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition duration-200 ease-in-out flex justify-between items-center">
+            <div>
+              <h3 class="text-lg font-bold"><%= task.title %></h3>
+              <p class="text-gray-700"><%= task.content %></p>
+              <p class="text-sm text-gray-500">优先级: <%= task.priority %></p>
+              <p class="text-sm text-gray-500">截止日期: <%= task.deadline %></p>
+            </div>
+            <div class="font-bold py-2 px-4 rounded-full transition duration-200 ease-in-out">
+              <%= if task.status != :completed do %>
+                <button phx-click="finish_task" phx-value-task_id={task.id}>
+                  <%= task_status(task.status) %>
+                </button>
+              <% else %>
+                <span><%= task_status(task.status) %></span>
+              <% end %>
+            </div>
           </li>
         </div>
       <% end %>
     </ul>
     """
+  end
+
+  defp task_status(status) do
+    case status do
+      :completed -> "✔️"
+      :in_progress -> "✊"
+      _ -> "⌛️"
+    end
   end
 end

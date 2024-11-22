@@ -21,7 +21,7 @@ defmodule Gtd.Todos.Task do
   @doc false
   def changeset(task, attrs) do
     task
-    |> cast(attrs, [:title, :content, :priority, :deadline, :project_id, :user_id])
+    |> cast(attrs, [:title, :content, :priority, :deadline, :project_id, :user_id, :status])
     |> validate_required([:title, :content, :priority, :deadline, :project_id, :user_id])
   end
 end
