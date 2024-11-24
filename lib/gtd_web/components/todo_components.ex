@@ -61,7 +61,7 @@ defmodule GtdWeb.TodoComponents do
   """
   def task_list(assigns) do
     ~H"""
-    <ul class="mt-2 space-y-2">
+    <ul class="mt-2 space-y-2 ml-4">
       <%= for task <- @tasks do %>
         <div>
           <li class="py-2 px-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition duration-200 ease-in-out flex justify-between items-center">

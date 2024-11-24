@@ -5,6 +5,109 @@ defmodule GtdWeb.UserTodosLive do
 
   defstruct selected_project: nil, projects: [], tasks: [], new_task: %{}
 
+  @doc """
+  Renders a form for creating a new task.
+  """
+  def task_form(assigns) do
+    ~H"""
+    <%= if @show do %>
+      <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
+          <span
+            class="close text-gray-500 hover:text-gray-700 cursor-pointer float-right"
+            phx-click="close_modal"
+          >
+            &times;
+          </span>
+          <h2 class="text-2xl font-semibold mb-4">New Task</h2>
+          <form phx-submit="commit_task" class="space-y-4">
+            <input
+              type="text"
+              name="title"
+              placeholder="Task Title"
+              required
+              class="w-full p-2 border border-gray-300 rounded"
+            />
+            <textarea
+              name="content"
+              placeholder="Task Content"
+              required
+              class="w-full p-2 border border-gray-300 rounded"
+            ></textarea>
+            <input
+              type="number"
+              name="priority"
+              placeholder="Priority"
+              required
+              class="w-full p-2 border border-gray-300 rounded"
+            />
+            <input
+              type="datetime-local"
+              name="deadline"
+              required
+              class="w-full p-2 border border-gray-300 rounded"
+            />
+            <button
+              type="submit"
+              class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full transition duration-200 ease-in-out"
+            >
+              Commit
+            </button>
+          </form>
+        </div>
+      </div>
+    <% end %>
+    """
+  end
+
+  @doc """
+  Renders a list of tasks.
+  """
+  def task_list(assigns) do
+    ~H"""
+    <%= for task <- @tasks do %>
+      <li class="flex justify-between items-center p-4 bg-white shadow-md rounded-lg mt-2">
+        <div class="flex items-center space-x-4">
+          <div>
+            <h3 class="text-lg font-bold"><%= task.title %></h3>
+            <p class="text-gray-600"><%= task.content %></p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <span class="text-sm text-gray-500">优先级: <%= priority(task.priority) %></span>
+          <span class="text-sm text-gray-500">截止日期: <%= task.deadline %></span>
+          <span class="bg-purple-200 text-purple-800 py-1 px-3 rounded-full">
+            <%= if task.status != :completed do %>
+              <button phx-click="finish_task" phx-value-task_id={task.id}>
+                <%= task_status(task.status) %>
+              </button>
+            <% else %>
+              <span><%= task_status(task.status) %></span>
+            <% end %>
+          </span>
+        </div>
+      </li>
+    <% end %>
+    """
+  end
+
+  defp priority(priority) do
+    case priority do
+      0 -> "🔥🔥🔥"
+      1 -> "🔥🔥"
+      2 -> "🔥"
+      _ -> "🪵"
+    end
+  end
+
+  defp task_status(status) do
+    case status do
+      :completed -> "✔️"
+      :in_progress -> "✊"
+      _ -> "⌛️"
+    end
+  end
+
   def project_list_item(assigns) do
     ~H"""
     <li>
@@ -13,13 +116,6 @@ defmodule GtdWeb.UserTodosLive do
           <span class="text-xl"><%= @project.icon %></span>
           <span class="font-semibold"><%= @project.title %></span>
           <span class="text-sm text-gray-500"><%= @project.status %></span>
-          <button
-            phx-click="new_task"
-            phx-value-project_id={@project.id}
-            class="ml-2 text-purple-500 font-bold py-1 px-2 rounded transition duration-200 ease-in-out"
-          >
-            ➕
-          </button>
         </div>
       </span>
     </li>
@@ -29,19 +125,31 @@ defmodule GtdWeb.UserTodosLive do
   def render(assigns) do
     ~H"""
     <div class="flex">
-      <div class="w-2/5 p-4 h-screen border-r bg-gray-100 rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold text-gray-900"><%= @current_user.name %></h2>
-        <h3 class="mt-4 text-lg font-medium text-gray-700 font-bold">Projects</h3>
-        <ul class="mt-2 space-y-2 text-center">
+      <div class="w-1/4 p-4 bg-white shadow-lg fixed left-0 h-full">
+        <div class="flex items-center mb-4">
+          <img src={~p"/images/todo_logo.svg"} alt="Logo" class="h-8 w-8" />
+          <span class="ml-2 text-xl font-bold">智能TODO</span>
+        </div>
+        <ul class="space-y-4">
           <%= for project <- @state.projects do %>
             <.project_list_item project={project} />
           <% end %>
         </ul>
+        <button class="mt-4 w-full bg-purple-500 text-white py-2 rounded-lg">+ 添加新项目</button>
       </div>
-      <div class="w-3/5 p-4 h-screen">
+      <div class="w-3/4 ml-1/4 p-4 fixed right-4">
         <.task_list tasks={@state.tasks} />
+        <%= if @state.selected_project do %>
+          <button
+            phx-click="new_task"
+            phx-value-project_id={@state.selected_project.id}
+            class="mt-4 w-full bg-purpe bg-purple-500 text-white py-2 rounded-lg"
+          >
+            + 添加任务
+          </button>
+        <% end %>
       </div>
-      <.task_form show={@state.new_task} />
+      <.task_form show={@state.new_task != nil} />
     </div>
     """
   end
@@ -66,6 +174,8 @@ defmodule GtdWeb.UserTodosLive do
     |> assign(:state, state)
     |> then(&{:ok, &1})
   end
+
+  # handle_event ...
 
   def handle_event("select_project", %{"project_id" => project_id}, socket) do
     projects = socket.assigns.state.projects

@@ -24,14 +24,6 @@
         <li class="text-[0.8125rem] leading-6 text-zinc-900">
           <%= @current_user.email %>
         </li>
-        <%!-- <li>
-          <.link
-            href={~p"/users/settings"}
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
-          >
-            Settings
-          </.link>
-        </li> --%>
         <li>
           <.link
             href={~p"/users/log_out"}
@@ -42,14 +34,14 @@
           </.link>
         </li>
       <% else %>
-        <li>
-          <.link href={Gtd.Github.authorize_url()} class="text-sm font-semibold">
-            <img src={~p"/images/github-mark.svg"} alt="Github Logo" class="h-6 w-6 inline-block" />
-            Login with Github
-          </.link>
-        </li>
+        <.link href={~p"/users/log_in"} class="text-sm font-semibold">
+          Login
+        </.link>
       <% end %>
     </ul>
     <%= @inner_content %>
+    <footer class="text-center text-gray-500 text-sm py-4 absolute bottom-0 w-full">
+      © 2023 智能TODO助手 | 高效管理您的任务，提升工作效率
+    </footer>
   </body>
 </html>

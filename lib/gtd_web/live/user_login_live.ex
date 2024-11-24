@@ -3,19 +3,26 @@ defmodule GtdWeb.UserLoginLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm">
-      <.header class="text-center">
-        Log in to account
-      </.header>
-
-      <.simple_form for={@form} id="login_form" action={~p"/users/log_in"} phx-update="ignore">
-        <:actions>
-          <.link href={Gtd.Github.authorize_url()} class="text-sm font-semibold">
-            <img src={~p"/images/github-mark.svg"} alt="Github Logo" class="h-6 w-6 inline-block" />
-            Login with Github
+    <div class="flex justify-center items-center">
+      <div class="bg-white shadow-md rounded-lg p-8 max-w-lg w-full">
+        <div class="flex justify-center mb-6">
+          <img src={~p"/images/todo_logo.svg"} alt="Logo" class="h-10 w-10" />
+          <span class="ml-2 text-xl font-bold">智能TODO助手</span>
+        </div>
+        <div class="text-center mb-6">
+          <h2 class="text-2xl font-semibold">欢迎使用</h2>
+          <p class="text-gray-600">使用GitHub账号登录以开始管理您的任务</p>
+        </div>
+        <div class="text-center">
+          <.link
+            href={Gtd.Github.authorize_url()}
+            class="text-sm font-semibold inline-flex items-center"
+          >
+            <img src={~p"/images/github-mark.svg"} alt="Github Logo" class="h-6 w-6 mr-2" />
+            使用GitHub登录
           </.link>
-        </:actions>
-      </.simple_form>
+        </div>
+      </div>
     </div>
     """
   end
