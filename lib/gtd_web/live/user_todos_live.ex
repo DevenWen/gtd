@@ -3,60 +3,92 @@ defmodule GtdWeb.UserTodosLive do
   alias Gtd.Todos
   require Logger
 
-  defstruct selected_project: nil, projects: [], tasks: [], new_task: %{}
+  defstruct selected_project: nil, projects: [], tasks: [], new_task: %{}, new_project: false
+
+  def project_form(assigns) do
+    ~H"""
+    <div :if={@show} class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
+        <h2 class="text-2xl font-semibold mb-4">New Project</h2>
+        <form phx-submit="commit_project" class="space-y-4">
+          <div class="flex space-x-2">
+            <input
+              type="text"
+              name="icon"
+              placeholder="Icon"
+              required
+              class="w-12 p-2 border border-gray-300 rounded"
+            />
+            <input
+              type="text"
+              name="title"
+              placeholder="Project Title"
+              required
+              class="flex-1 p-2 border border-gray-300 rounded"
+            />
+          </div>
+          <button
+            type="submit"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full transition duration-200 ease-in-out"
+          >
+            创建新项目
+          </button>
+        </form>
+      </div>
+    </div>
+    """
+  end
 
   @doc """
   Renders a form for creating a new task.
   """
   def task_form(assigns) do
     ~H"""
-    <%= if @show do %>
-      <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
-          <span
-            class="close text-gray-500 hover:text-gray-700 cursor-pointer float-right"
-            phx-click="close_modal"
+    <div :if={@show} class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
+        <span
+          class="close text-gray-500 hover:text-gray-700 cursor-pointer float-right"
+          phx-click="close_modal"
+        >
+          &times;
+        </span>
+        <h2 class="text-2xl font-semibold mb-4">New Task</h2>
+        <form phx-submit="commit_task" class="space-y-4">
+          <input
+            type="text"
+            name="title"
+            placeholder="Task Title"
+            required
+            class="w-full p-2 border border-gray-300 rounded"
+          />
+          <textarea
+            name="content"
+            placeholder="Task Content"
+            required
+            class="w-full p-2 border border-gray-300 rounded"
+          ></textarea>
+          <input
+            type="number"
+            name="priority"
+            placeholder="Priority"
+            required
+            class="w-full p-2 border border-gray-300 rounded"
+          />
+          <input
+            type="datetime-local"
+            name="deadline"
+            required
+            class="w-full p-2 border border-gray-300 rounded"
+          />
+          <button
+            type="submit"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full transition duration-200 ease-in-out"
           >
-            &times;
-          </span>
-          <h2 class="text-2xl font-semibold mb-4">New Task</h2>
-          <form phx-submit="commit_task" class="space-y-4">
-            <input
-              type="text"
-              name="title"
-              placeholder="Task Title"
-              required
-              class="w-full p-2 border border-gray-300 rounded"
-            />
-            <textarea
-              name="content"
-              placeholder="Task Content"
-              required
-              class="w-full p-2 border border-gray-300 rounded"
-            ></textarea>
-            <input
-              type="number"
-              name="priority"
-              placeholder="Priority"
-              required
-              class="w-full p-2 border border-gray-300 rounded"
-            />
-            <input
-              type="datetime-local"
-              name="deadline"
-              required
-              class="w-full p-2 border border-gray-300 rounded"
-            />
-            <button
-              type="submit"
-              class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full transition duration-200 ease-in-out"
-            >
-              Commit
-            </button>
-          </form>
-        </div>
+            Commit
+          </button>
+        </form>
       </div>
-    <% end %>
+    </div>
     """
   end
 
@@ -134,8 +166,11 @@ defmodule GtdWeb.UserTodosLive do
           <%= for project <- @state.projects do %>
             <.project_list_item project={project} />
           <% end %>
+          <.project_form show={@state.new_project} />
         </ul>
-        <button class="mt-4 w-full bg-purple-500 text-white py-2 rounded-lg">+ 添加新项目</button>
+        <button phx-click="new_project" class="mt-4 w-full bg-purple-500 text-white py-2 rounded-lg">
+          + 添加新项目
+        </button>
       </div>
       <div class="w-3/4 ml-1/4 p-4 fixed right-4">
         <.task_list tasks={@state.tasks} />
@@ -245,6 +280,20 @@ defmodule GtdWeb.UserTodosLive do
         Logger.error("Invalid deadline format: #{reason}")
         {:noreply, socket |> put_flash(:error, "Invalid deadline format.")}
     end
+  end
+
+  def handle_event("new_project", _params, socket) do
+    state = %{socket.assigns.state | new_project: true}
+    {:noreply, assign(socket, state: state)}
+  end
+
+  def handle_event("commit_project", %{"icon" => icon, "title" => title}, socket) do
+    {:ok, _project} =
+      Todos.create_project(%{icon: icon, title: title, user_id: socket.assigns.current_user.id})
+
+    projects = Todos.list_projects_for_user(socket.assigns.current_user)
+    state = %{socket.assigns.state | projects: projects, new_project: false}
+    {:noreply, assign(socket, state: state)}
   end
 
   def handle_event("close_modal", _params, socket) do
