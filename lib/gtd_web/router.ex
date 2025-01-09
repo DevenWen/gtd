@@ -56,6 +56,12 @@ defmodule GtdWeb.Router do
 
   ## Authentication routes
 
+  scope "/demo", GtdWeb do
+    pipe_through [:browser]
+
+    live "/", DemoLive, :index
+  end
+
   scope "/todos", GtdWeb do
     pipe_through [:browser]
 
